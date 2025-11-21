@@ -3,6 +3,8 @@
 #include "SimpleCAN.h"   // <- this is the only include required, it should be smart enough to find the correct subclass
 uint32_t randomData = 0; // <- 32-bit unsigned is easy to use as can data (4 bytes)
 
+CANio can = CANio(CAN_RX, CAN_TX); // <- create SimpleCAN object
+
 void setup()
 {
 
@@ -12,7 +14,7 @@ void setup()
     delay(2000);
     Serial.println("Starting CAN");
     // CAN.enableInternalLoopback();
-    CanFilter filter = CanFilter(MASK_STANDARD, 0x321, 0x321, FILTER_ANY_FRAME);
+    CanFilter filter = CanFilter(MASK_EXTENDED, 0x321, 0x321, FILTER_ANY_FRAME);
     CAN.filter(filter);
     CAN.begin(125000);
     delay(10);

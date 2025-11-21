@@ -1,19 +1,31 @@
-# SimpleCAN (a CAN library for ARDUINO)
+# SimpleCANio - A Simple CAN Abstraction for stm32 and esp32 devices
 
-This library if for microcontrollers with an onboard CAN Controller.  
+This library is an adapration fork of Owen Williams' SimpleCAN library: https://github.com/owennewo/SimpleCAN
 
-Esp32 and high-end STM32 have onboard CAN Controllers. For STM, it isn't always obvious if it supports CAN e.g. blackpill_f411ce doesn't support CAN but f405 often does.
+[![GitHub release](https://img.shields.io/github/release/simplefoc/SimpleCANio.svg)](https://github.com/simplefoc/SimpleCANio/releases)
 
-The API is supposed aims to be similar to the Arduino Uno R4 (Renesas) API.
-There are some small areas where this is not possible (E.g. the use of pre-initialised CAN - stm sometimes uses this as a CAN_TypeDef e.g blackpill)
+This library provides a simple CAN bus abstraction layer for stm32 and esp32 based boards. 
+It supports multiple CAN controllers and makes it easy to switch between them.
 
-This aims to be a true Hardware Abstraction across multiple vendor/series.
+It is designed to work well with the SimpleFOC ecosystem, but can be used independently in any project requiring CAN bus communication.
 
-By true, I mean that you could build Messages on this that would work across esp32, stm can2b, stm fdcan. Same API, different hardware.
+:warning: This library is still in early development. 
 
-## Examples
-The examples folder has examples of sending/receiving standard/extended frames in loopback and normal mode. 
+## Features 
 
-## Unit test
+- Support for multiple CAN controllers (see list below)
+- Simple API for sending and receiving CAN messages
+- Designed for easy integration with SimpleFOC projects
+- Compatible with stm32 and esp32 based boards
+- Allows an easy implementation of new CAN interfaces for unsupported controllers (`GenericCAN` class)
 
-A bit ununsual but there are 'onboard' unit tests, that you can try to run.
+## Supported CAN Controllers
+- STM32 built-in CAN controller (using STM32 CAN library)
+    - CAN and FDCAN peripherals supported
+- ESP32 built-in CAN controller (using ESP32 CAN library)
+    - tested on esp32, esp32s3 and esp32c6
+- Allows for custom CAN controllers via `GenericCAN` class
+
+## SimpleFOC Integration
+
+SimpleFOC library builds on top of SimpleCANio to construct the CANCommander protocol (see SimpleFOCdrivers library for more details)

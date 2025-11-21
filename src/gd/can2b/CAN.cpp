@@ -1,4 +1,4 @@
-#if ARDUINO_ARCH_GD32
+#if ARDUINO_ARCH_GD32 && 0
 
 #include "./CAN.h"
 

@@ -1,29 +1,29 @@
-#include "BaseCAN.h"
+#include "HardwareCAN.h"
 
-BaseCAN::BaseCAN()
+HardwareCAN::HardwareCAN()
 {
     _Serial = &Serial;
     mode = CAN_NORMAL;
 }
 
-bool BaseCAN::begin(int can_bitrate)
+bool HardwareCAN::begin(int can_bitrate)
 {
     return begin(static_cast<CanBitRate>(can_bitrate));
 }
 
-int BaseCAN::enableInternalLoopback()
+int HardwareCAN::enableInternalLoopback()
 {
-    BaseCAN::mode = CAN_LOOPBACK;
+    mode = CAN_LOOPBACK;
     return 1;
 }
 
-int BaseCAN::disableInternalLoopback()
+int HardwareCAN::disableInternalLoopback()
 {
-    BaseCAN::mode = CAN_NORMAL;
+    mode = CAN_NORMAL;
     return 1;
 }
 
-CanTiming BaseCAN::solveCanTiming(uint32_t clockFreq, uint32_t bitrate, uint8_t multiplier)
+CanTiming HardwareCAN::solveCanTiming(uint32_t clockFreq, uint32_t bitrate, uint8_t multiplier)
 {
     // this algo is inspired by: http://www.bittiming.can-wiki.info/
     CanTiming timing = {};
@@ -91,12 +91,12 @@ CanTiming BaseCAN::solveCanTiming(uint32_t clockFreq, uint32_t bitrate, uint8_t 
     return timing;
 }
 
-void BaseCAN::logMessage(CanMsg const *msg)
+void HardwareCAN::logMessage(CanMsg const *msg)
 {
     msg->printTo(*_Serial);
 }
 
-void BaseCAN::failAndBlink(CanErrorType errorType)
+void HardwareCAN::failAndBlink(CanErrorType errorType)
 {
 #ifdef CAN_DEBUG
     _Serial->print("fatal error: ");
@@ -115,7 +115,20 @@ void BaseCAN::failAndBlink(CanErrorType errorType)
     }
 }
 
-void BaseCAN::logTo(Stream *serial)
+void HardwareCAN::logTo(Stream *serial)
 {
     _Serial = serial;
+}
+
+
+CanStatus HardwareCAN::subscribe(void (*_messageReceiveCallback)())
+{
+    _Serial->println("CAN-ERROR: Subscribing not implemented!");
+    return CAN_ERROR;
+}
+
+CanStatus HardwareCAN::unsubscribe()
+{
+    _Serial->println("CAN-ERROR: Unsubscribing not implemented!");
+    return CAN_ERROR;
 }

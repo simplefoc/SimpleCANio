@@ -1,27 +1,38 @@
-#if HAL_CAN_MODULE_ENABLED
 
 #include "CAN.h"
+#if defined(HAL_CAN_MODULE_ENABLED) && defined(ARDUINO_ARCH_STM32)
 
 extern "C" void HAL_CAN_MspInit(CAN_HandleTypeDef *hcan);
-
-// extern "C" void CAN1_RX0_IRQHandler(void);
+extern "C" void CAN1_RX0_IRQHandler(void);  
 extern "C" void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan);
 
-void (*STM_CAN::callbackFunction_)() = nullptr;
+void (*HardwareCAN::_callbackFunction)() = nullptr;
 CAN_RxHeaderTypeDef rxHeader_ = {};
 CAN_TxHeaderTypeDef txHeader_ = {};
 CAN_HandleTypeDef STM_CAN::hcan_ = {};
 
-uint16_t STM_CAN::pinRX_;
-uint16_t STM_CAN::pinTX_;
-uint16_t STM_CAN::pinSHDN_;
 
-STM_CAN::STM_CAN(uint16_t pinRX, uint16_t pinTX, uint16_t pinSHDN) : filter_(CanFilter(FilterType::ACCEPT_ALL)), started_(false)
+bool STM_CAN::init(uint16_t pinRX, uint16_t pinTX, uint16_t pinSHDN, uint16_t pinEnable) 
 {
   hcan_.Instance = CAN1;
   pinRX_ = pinRX;
   pinTX_ = pinTX;
   pinSHDN_ = pinSHDN;
+  pinEnable_ = pinEnable;
+
+
+  //pinMode(pinRX_, INPUT_PULLUP); // <- on some boards like the stm32f403rg_disc1, this is required for CAN_LOOPBACK mode to work !?!
+
+  // TWO APPROACHES
+  // APPROACH 1: use pinmaps (this is the recommended approach and uses PeripheralPins.c)
+  pin_function((PinName)pinRX_, pinmap_function((PinName)pinRX_, PinMap_CAN_RD));
+  pin_function((PinName)pinTX_, pinmap_function((PinName)pinTX_, PinMap_CAN_TD));
+
+
+  if (pinEnable != NC) 
+  {
+    pinMode(pinEnable, OUTPUT);
+  }
 
   if (pinSHDN != NC)
   {
@@ -29,6 +40,7 @@ STM_CAN::STM_CAN(uint16_t pinRX, uint16_t pinTX, uint16_t pinSHDN) : filter_(Can
   }
 
   mode = CAN_NORMAL;
+  return true;
 }
 
 bool STM_CAN::begin(int bitrate)
@@ -62,6 +74,10 @@ bool STM_CAN::begin(int bitrate)
   {
     digitalWrite(pinSHDN_, LOW);
   }
+  if (pinEnable_ != NC)
+  {
+    digitalWrite(pinEnable_, HIGH);
+  }
 
   started_ = true;
   applyFilter();
@@ -75,6 +91,10 @@ void STM_CAN::end()
   if (pinSHDN_ != NC)
   {
     digitalWrite(pinSHDN_, HIGH);
+  }
+  if (pinEnable_ != NC)
+  {
+    digitalWrite(pinEnable_, LOW);
   }
   logStatus('x',
             HAL_CAN_Stop(&hcan_));
@@ -157,14 +177,14 @@ void STM_CAN::applyFilter()
 
 CanStatus STM_CAN::subscribe(void (*_messageReceiveCallback)())
 {
-  STM_CAN::callbackFunction_ = _messageReceiveCallback;
+  HardwareCAN::_callbackFunction = _messageReceiveCallback;
   return logStatus('a',
                    HAL_CAN_ActivateNotification(&hcan_, CAN_IT_RX_FIFO0_MSG_PENDING));
 }
 
 CanStatus STM_CAN::unsubscribe()
 {
-  callbackFunction_ = nullptr;
+  HardwareCAN::_callbackFunction = nullptr;
   return logStatus('u',
                    HAL_CAN_DeactivateNotification(&hcan_, CAN_IT_RX_FIFO0_MSG_PENDING));
 }
@@ -234,25 +254,8 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef *hfdcan)
 {
 
   __HAL_RCC_CAN1_CLK_ENABLE();
-  HAL_NVIC_SetPriority(CAN1_RX0_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(CAN1_RX0_IRQn,  9, 0);
   HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
-
-  pinMode(STM_CAN::pinRX_, INPUT_PULLUP); // <- on some boards like the stm32f403rg_disc1, this is required for CAN_LOOPBACK mode to work !?!
-
-  // TWO APPROACHES
-  // APPROACH 1: use pinmaps (this is the recommended approach and uses PeripheralPins.c)
-  pin_function((PinName)STM_CAN::pinRX_, pinmap_function((PinName)STM_CAN::pinRX_, PinMap_CAN_RD));
-  pin_function((PinName)STM_CAN::pinTX_, pinmap_function((PinName)STM_CAN::pinTX_, PinMap_CAN_TD));
-
-  // APPROACH 2: use HAL and hardcoded settings - example for PD_0 and PD_1
-  // GPIO_InitTypeDef GPIO_InitStruct = {0};
-  // GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1;
-  // GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  // GPIO_InitStruct.Pull = GPIO_NOPULL;
-  // GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  // GPIO_InitStruct.Alternate = GPIO_AF9_CAN1;
-  // HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-  // __HAL_RCC_GPIOD_CLK_ENABLE();
 }
 
 void CAN1_RX0_IRQHandler(void)
@@ -262,11 +265,12 @@ void CAN1_RX0_IRQHandler(void)
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-  if (STM_CAN::callbackFunction_ == nullptr)
+  
+  if (HardwareCAN::_callbackFunction == nullptr)
   {
     return;
   }
-  STM_CAN::callbackFunction_();
+  HardwareCAN::_callbackFunction();
 }
 
 CanStatus STM_CAN::logStatus(char op, HAL_StatusTypeDef status)
@@ -286,13 +290,5 @@ CanStatus STM_CAN::logStatus(char op, HAL_StatusTypeDef status)
 #endif
   return status == HAL_OK ? CAN_OK : CAN_ERROR;
 }
-
-#if CAN_HOWMANY > 0
-STM_CAN CAN(PIN_CAN0_RX, PIN_CAN0_TX, PIN_CAN0_SHDN);
-#endif
-
-// #if CAN_HOWMANY > 1
-// STM_CAN CAN1(PIN_CAN1_RX, PIN_CAN1_TX, PIN_CAN1_SHDN);
-// #endif
 
 #endif

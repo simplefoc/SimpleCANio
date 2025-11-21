@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CANFILTER_H
+#define CANFILTER_H
 
 enum FilterType : int
 {
@@ -46,3 +47,5 @@ private:
     unsigned int identifier_;
     unsigned int mask_;
 };
+
+#endif

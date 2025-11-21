@@ -1,73 +1,92 @@
+#include "CAN.h"
+
 #if defined(ARDUINO_ARCH_ESP32)
 
-#include "CAN.h"
-#include <Arduino.h>
 
-void (*ESP_TWAI_CAN::receiveCallback)(CanMsg *rxMessage);
+void (*HardwareCAN::_callbackFunction)() = nullptr;
 twai_message_t _rxEspFrame = {};
 twai_message_t _txEspFrame = {};
 twai_status_info_t _statusInfo = {};
 
-uint16_t ESP_TWAI_CAN::_pinRX;
-uint16_t ESP_TWAI_CAN::_pinTX;
-uint16_t ESP_TWAI_CAN::_pinSHDN;
 
-ESP_TWAI_CAN::ESP_TWAI_CAN(uint32_t pinRX, uint32_t pinTX, uint32_t pinSHDN)
+bool ESP_TWAI_CAN::init(uint16_t pinRX, uint16_t pinTX, uint16_t pinSHDN, uint16_t pinEnable)
 {
-    pinMode(pinSHDN, OUTPUT);
-    digitalWrite(pinSHDN, HIGH);
-    ESP_TWAI_CAN::_pinRX = pinRX;
-    ESP_TWAI_CAN::_pinTX = pinTX;
-    ESP_TWAI_CAN::_pinSHDN = pinSHDN;
+    
+    pinRX_ = pinRX;
+    pinTX_ = pinTX;
+    pinSHDN_ = pinSHDN;
+    pinEnable_ = pinEnable;
+
+    if(pinSHDN != NC) pinMode(pinSHDN, OUTPUT);  
+    if(pinEnable != NC) pinMode(pinEnable, OUTPUT);
+
     _filter_config = {
         .acceptance_code = 0xFFFFFFFF, // impossible identifier (larger than 29bits)
         .acceptance_mask = 0x00000000, // all bits must match impossible mask (reject all)
         .single_filter = true};
 
     mode = CAN_NORMAL;
+    
+    return true;
 }
+
 
 bool ESP_TWAI_CAN::begin(int can_bitrate)
 {
-    _general_config = {
-        .mode = mode == CanMode::CAN_LOOPBACK ? TWAI_MODE_NO_ACK : TWAI_MODE_NORMAL,
-        .tx_io = static_cast<gpio_num_t>(_pinTX),
-        .rx_io = static_cast<gpio_num_t>(_pinRX),
-        .clkout_io = TWAI_IO_UNUSED,
-        .bus_off_io = TWAI_IO_UNUSED,
-        .tx_queue_len = 5,
-        .rx_queue_len = 5,
-        .alerts_enabled = TWAI_ALERT_NONE,
-        .clkout_divider = 0};
+    _general_config = TWAI_GENERAL_CONFIG_DEFAULT(
+        (gpio_num_t)pinTX_, 
+        (gpio_num_t)pinRX_, 
+        CanMode::CAN_LOOPBACK ? TWAI_MODE_NO_ACK : TWAI_MODE_NORMAL
+    );
 
-    const uint32_t clockFreq = APB_CLK_FREQ;
+    switch (can_bitrate)
+    {
+    case 1000000:
+        _timing_config = TWAI_TIMING_CONFIG_1MBITS();
+        break;
+    case 500000:
+        _timing_config = TWAI_TIMING_CONFIG_500KBITS();
+        break;
+    case 250000:
+        _timing_config = TWAI_TIMING_CONFIG_250KBITS();
+        break;
+    case 125000:
+        _timing_config = TWAI_TIMING_CONFIG_125KBITS();
+        break;
+    case 100000:
+        _timing_config = TWAI_TIMING_CONFIG_100KBITS();
+        break;
+    case 50000:
+        _timing_config = TWAI_TIMING_CONFIG_50KBITS();
+        break;
+    case 20000:
+        _timing_config = TWAI_TIMING_CONFIG_20KBITS();
+        break;
+    case 10000:
+        _timing_config = TWAI_TIMING_CONFIG_10KBITS();
+        break;
+    default:
+        // unsupported bitrate
+        return _Serial->print("Unsupported CAN bitrate");
+        return false;
+    }
 
-    CanTiming timing = solveCanTiming(clockFreq, (uint32_t)can_bitrate, 2); // <-- multiplier of 2 will ensure prescaler is even (as per spec)
-
-    _timing_config = {
-        .brp = timing.prescaler,
-        .tseg_1 = (uint8_t)timing.tseg1,
-        .tseg_2 = (uint8_t)timing.tseg2,
-        .sjw = (uint8_t)timing.sjw,
-        .triple_sampling = false};
+    _timing_config = TWAI_TIMING_CONFIG_1MBITS();
 
     logStatus('i',
               twai_driver_install(&_general_config, &_timing_config, &_filter_config));
 
-    if (_pinSHDN != NC)
-    {
-        digitalWrite(ESP_TWAI_CAN::_pinSHDN, LOW);
-    }
+    if (pinSHDN_ != NC) digitalWrite(pinSHDN_, LOW);
+    if (pinEnable_ != NC) digitalWrite(pinEnable_, HIGH);
+
     return logStatus('s',
                      twai_start());
 }
 
 void ESP_TWAI_CAN::end()
 {
-    if (_pinSHDN != NC)
-    {
-        digitalWrite(ESP_TWAI_CAN::_pinSHDN, HIGH);
-    }
+    if (pinSHDN_ != NC) digitalWrite(pinSHDN_, HIGH);
+    if (pinEnable_ != NC) digitalWrite(pinEnable_, LOW);
     logStatus('x',
               twai_stop());
 
@@ -135,19 +154,19 @@ int ESP_TWAI_CAN::write(CanMsg const &txMsg)
     }
 
     if (logStatus('w',
-                  twai_transmit(&_txEspFrame, portMAX_DELAY)) == CAN_OK)
-    {
-#ifdef CAN_DEBUG
-        _Serial->print("tx: ");
-        txMsg.printTo(*_Serial);
-        _Serial->println();
-#endif
-        return CAN_OK;
-    }
-    else
-    {
-        return CAN_ERROR;
-    }
+                      twai_transmit(&_txEspFrame, pdMS_TO_TICKS(1))) == CAN_OK)
+        {
+    #ifdef CAN_DEBUG
+            _Serial->print("tx: ");
+            txMsg.printTo(*_Serial);
+            _Serial->println();
+    #endif
+            return CAN_OK;
+        }
+        else
+        {
+            return CAN_ERROR;
+        }
 }
 
 CanMsg ESP_TWAI_CAN::read()
@@ -238,12 +257,6 @@ CanStatus ESP_TWAI_CAN::logStatus(char op, esp_err_t status)
     return status == ESP_OK ? CAN_OK : CAN_ERROR;
 }
 
-#if CAN_HOWMANY > 0
-ESP_TWAI_CAN CAN(PIN_CAN0_RX, PIN_CAN0_TX, PIN_CAN0_SHDN);
-#endif
 
-// #if CAN_HOWMANY > 1
-// ESP_TWAI_CAN CAN1(PIN_CAN1_RX, PIN_CAN1_TX, PIN_CAN1_SHDN);
-// #endif
 
 #endif

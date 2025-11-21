@@ -139,6 +139,11 @@ public:
     uint32_t id;
     uint8_t data_length;
     uint8_t data[MAX_DATA_LENGTH];
+
+    bool isEmpty() const
+    {
+        return (data == nullptr);
+    }
 };
 
 /**************************************************************************************
