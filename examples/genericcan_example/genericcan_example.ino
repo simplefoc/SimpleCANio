@@ -1,6 +1,6 @@
 
 #include <Arduino.h>
-#include "SimpleCAN.h"   
+#include "SimpleCANio.h"   
 
 // configuration
 bool isExtendedFrame = false;
