@@ -20,9 +20,9 @@ It is designed to work well with the SimpleFOC ecosystem, but can be used indepe
 - Allows an easy implementation of new CAN interfaces for unsupported controllers (`GenericCAN` class)
 
 ## Supported CAN Controllers
-- STM32 built-in CAN controller (using STM32 CAN library)
+- STM32 built-in CAN controller 
     - CAN and FDCAN peripherals supported
-- ESP32 built-in CAN controller (using ESP32 CAN library)
+- ESP32 built-in CAN controller
     - tested on esp32, esp32s3 and esp32c6
 - Allows for custom CAN controllers via `GenericCAN` class
 
