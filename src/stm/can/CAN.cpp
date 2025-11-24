@@ -122,15 +122,19 @@ void STM_CAN::applyFilter()
 
   if (filter_.getType() == FilterType::MASK_STANDARD)
   {
-    filterIdHigh = filter_.getIdentifier() << 5; // make room for IDE, RTR bits (+ 3 unused)
+    filterIdHigh = filter_.getIdentifier() << 5; // make roo for IDE, RTR bits (+ 3 unused)
     filterMaskHigh = filter_.getMask() << 5;
   }
   else if (filter_.getType() == FilterType::MASK_EXTENDED)
   {
-    filterIdLow = (filter_.getIdentifier() & 0x0000ffff) << 3; // make room for IDE, RTR bit (+ 1 unused bit)
-    filterIdHigh = filter_.getIdentifier() >> 16;
-    filterMaskLow = (filter_.getMask() & 0x0000ffff) << 3;
-    filterMaskHigh = filter_.getMask() >> 16;
+    // For extended ID filter in 32-bit mode, shift the entire 29-bit ID left by 3 bits
+    // to make room for IDE, RTR bit (+ 1 unused bit), then split across high/low registers
+    uint32_t shiftedId = filter_.getIdentifier() << 3;
+    filterIdLow = shiftedId & 0xFFFF;
+    filterIdHigh = shiftedId >> 16;
+    uint32_t shiftedMask = filter_.getMask() << 3;
+    filterMaskLow = shiftedMask & 0xFFFF;
+    filterMaskHigh = shiftedMask >> 16;
   }
   else if (filter_.getType() == FilterType::ACCEPT_ALL)
   {
