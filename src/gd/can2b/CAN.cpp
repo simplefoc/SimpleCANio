@@ -20,7 +20,7 @@ uint8_t can_tseg1;
 uint8_t can_tseg2;
 uint8_t can_sjw;
 
-GD_CAN::GD_CAN(uint16_t pinRX, uint16_t pinTX, uint16_t pinSHDN) : filter_(CanFilter(FilterType::ACCEPT_ALL)), started_(false)
+GD_CAN::GD_CAN(uint16_t pinRX, uint16_t pinTX, uint16_t pinSHDN) : filter_(CanFilter(FilterType::MASK_ACCEPT_ALL)), started_(false)
 {
     hcan_ = CAN0;
     pinRX_ = pinRX;
@@ -161,7 +161,7 @@ void GD_CAN::applyFilter()
         filterMaskLow = (filter_.getMask() & 0x0000ffff) << 3;
         filterMaskHigh = filter_.getMask() >> 16;
     }
-    else if (filter_.getType() == FilterType::ACCEPT_ALL)
+    else if (filter_.getType() == FilterType::MASK_ACCEPT_ALL)
     {
         filterIdLow = 0x0000;
         filterIdHigh = 0x0000; //<- no digits have to match

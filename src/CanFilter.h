@@ -3,8 +3,8 @@
 
 enum FilterType : int
 {
-    REJECT_ALL = 0,
-    ACCEPT_ALL = 1,
+    MASK_REJECT_ALL = 0,
+    MASK_ACCEPT_ALL = 1,
     MASK_STANDARD = 2,
     MASK_EXTENDED = 3
 };

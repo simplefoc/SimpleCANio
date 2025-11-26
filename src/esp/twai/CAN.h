@@ -40,7 +40,7 @@ private:
     twai_message_t _rxEspFrame;
     twai_message_t _txEspFrame;
     twai_status_info_t _statusInfo;
-    CanFilter _filter{CanFilter(FilterType::ACCEPT_ALL)};
+    CanFilter _filter{CanFilter(FilterType::MASK_ACCEPT_ALL)};
 
     CanStatus logStatus(char op, esp_err_t status);
 };

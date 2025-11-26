@@ -1,19 +1,28 @@
 /*
 This code example shows normal operation of the SimpleCANio library.
 
-It will work with any stm32 and esp32 board that support CAN/CAN FD
+This code is specific to Teensy boards using FlexCAN_T4.
 */
 #include <Arduino.h>
 #include "SimpleCANio.h"   // <- this is the only include required, it should be smart enough to find the correct subclass
 
 #define CAN_ID 0x321
 
-#define CAN_RX // TODO set your CAN RX and TX pins here
-#define CAN_TX // TODO set your CAN RX and TX pins here
+// | Board        | CAN bus|  CAN RX Pin | CAN TX Pin |
+// |--------------|-------------|------------|------------|
+// | Teensy 3.2   |CAN0         | 4          | 3          |
+// | Teensy 3.5   |CAN0         | 4          | 3          |
+// | Teensy 3.6   |CAN0         | 4          | 3          |
+// | Teensy 3.6   |CAN1         | 34         | 33         |
+// | Teensy 4.0   |CAN1         | 23         | 22         |
+// | Teensy 4.1   |CAN2         | 0          | 1          |
+// | Teensy 4.1   |CAN3         | 30         | 31         |    
+#define CAN_BUS CAN0 // TODO set the bus you want to use , Teensy
 #define CAN_SHDN NC
 #define CAN_ENABLE NC
 
-CANio can = CANio(CAN_RX, CAN_TX, CAN_SHDN, CAN_ENABLE); // <- create SimpleCAN object
+TEENSY_FLEXCAN(CAN_BUS) can_bus;
+CANio can(can_bus, CAN_SHDN, CAN_ENABLE); 
 
 void setup()
 {

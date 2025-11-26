@@ -111,11 +111,11 @@ void ESP_TWAI_CAN::filter(CanFilter filter)
         identifierExtraBits = 0b111;
     }
 
-    if (filter.getType() == FilterType::ACCEPT_ALL)
+    if (filter.getType() == FilterType::MASK_ACCEPT_ALL)
     {
         _filter_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
     }
-    else if (filter.getType() == FilterType::REJECT_ALL)
+    else if (filter.getType() == FilterType::MASK_REJECT_ALL)
     {
         // TODO: check this is valid way of disabling or find better approach
         _filter_config = {.acceptance_code = 0xFFFFFFFF, // <- this is an impossible identifier

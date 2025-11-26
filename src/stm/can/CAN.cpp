@@ -136,7 +136,7 @@ void STM_CAN::applyFilter()
     filterMaskLow = shiftedMask & 0xFFFF;
     filterMaskHigh = shiftedMask >> 16;
   }
-  else if (filter_.getType() == FilterType::ACCEPT_ALL)
+  else if (filter_.getType() == FilterType::MASK_ACCEPT_ALL)
   {
     filterIdLow = 0xffff;
     filterIdHigh = 0x0000; //<- no digits have to match
@@ -173,7 +173,7 @@ void STM_CAN::applyFilter()
       .FilterBank = filterIndex,
       .FilterMode = CAN_FILTERMODE_IDMASK,
       .FilterScale = filter_.getType() == FilterType::MASK_EXTENDED ? CAN_FILTERSCALE_32BIT : CAN_FILTERSCALE_16BIT,
-      .FilterActivation = filter_.getType() == FilterType::REJECT_ALL ? DISABLE : ENABLE,
+      .FilterActivation = filter_.getType() == FilterType::MASK_REJECT_ALL ? DISABLE : ENABLE,
   };
   logStatus('f',
             HAL_CAN_ConfigFilter(&hcan_, &filterDef));

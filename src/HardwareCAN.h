@@ -90,8 +90,8 @@ protected:
     Print *_Serial = &Serial;
     CanMode mode = CAN_NORMAL;
 
-	uint16_t pinRX_;
-	uint16_t pinTX_;
-	uint16_t pinSHDN_;
-	uint16_t pinEnable_;
+	uint16_t pinRX_ = NC;
+	uint16_t pinTX_ = NC;
+	uint16_t pinSHDN_ = NC;
+	uint16_t pinEnable_ = NC;
 };

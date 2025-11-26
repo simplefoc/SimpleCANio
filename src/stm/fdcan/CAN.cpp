@@ -132,11 +132,11 @@ void STM_FDCAN::applyFilter()
 
   switch (filter_.getType())
   {
-  case REJECT_ALL:
+  case MASK_REJECT_ALL:
     logStatus('g',
               HAL_FDCAN_ConfigGlobalFilter(&hcan_, FDCAN_REJECT, FDCAN_REJECT, FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE));
     break;
-  case ACCEPT_ALL:
+  case MASK_ACCEPT_ALL:
     logStatus('g',
               HAL_FDCAN_ConfigGlobalFilter(&hcan_, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE));
     break;

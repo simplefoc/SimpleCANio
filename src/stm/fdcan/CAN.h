@@ -12,7 +12,7 @@ class STM_FDCAN : public HardwareCAN
 public:
 
 	STM_FDCAN(uint16_t rx_pin, uint16_t tx_pin, uint16_t shdn_pin = NC, uint16_t enable_pin = NC)
-		: HardwareCAN(), filter_(CanFilter(FilterType::ACCEPT_ALL))
+		: HardwareCAN(), filter_(CanFilter(FilterType::MASK_ACCEPT_ALL))
 	{
 		init(rx_pin, tx_pin, shdn_pin, enable_pin);
 	}
@@ -35,7 +35,7 @@ public:
 	static FDCAN_HandleTypeDef hcan_;
 
 private:
-	CanFilter filter_{CanFilter(FilterType::ACCEPT_ALL)};
+	CanFilter filter_{CanFilter(FilterType::MASK_ACCEPT_ALL)};
 	void applyFilter(); // filter is applied after begin() is called
 	bool started_ = false;
 	uint32_t lengthToDLC(uint32_t length);

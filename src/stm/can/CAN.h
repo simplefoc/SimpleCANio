@@ -12,7 +12,7 @@ class STM_CAN : public HardwareCAN
 public:
 
 	STM_CAN(uint16_t rx_pin, uint16_t tx_pin, uint16_t shdn_pin = NC, uint16_t enable_pin = NC)
-		: HardwareCAN(), filter_(CanFilter(FilterType::ACCEPT_ALL))
+		: HardwareCAN(), filter_(CanFilter(FilterType::MASK_ACCEPT_ALL))
 	{
 		init(rx_pin, tx_pin, shdn_pin, enable_pin);
 	}
@@ -37,7 +37,7 @@ public:
 private:
 	bool started_ = false;
 	void applyFilter(); // filter is applied after begin() is called
-	CanFilter filter_{CanFilter(FilterType::ACCEPT_ALL)};
+	CanFilter filter_{CanFilter(FilterType::MASK_ACCEPT_ALL)};
 	CAN_RxHeaderTypeDef rxHeader_;
 	CAN_TxHeaderTypeDef txHeader_;
 	CanStatus logStatus(char op, HAL_StatusTypeDef status);
