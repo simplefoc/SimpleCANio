@@ -21,7 +21,7 @@ This code is specific to Teensy boards using FlexCAN_T4.
 #define CAN_SHDN NC
 #define CAN_ENABLE NC
 
-TEENSY_FLEXCAN(CAN_BUS) can_bus;
+auto can_bus = TEENSY_FLEXCAN(CAN_BUS);
 CANio can(can_bus, CAN_SHDN, CAN_ENABLE); 
 
 void setup()
