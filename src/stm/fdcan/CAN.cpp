@@ -17,7 +17,7 @@ FDCAN_HandleTypeDef STM_FDCAN::hcan_ = {};
 
 bool STM_FDCAN::init(uint16_t pinRX, uint16_t pinTX, uint16_t pinSHDN, uint16_t pinEnable)
 {
-  filter_ = ACCEPT_ALL;
+  filter_ = MASK_ACCEPT_ALL;
 
   PinName rx_name = static_cast<PinName>(pinRX);
   PinName tx_name = static_cast<PinName>(pinTX);
