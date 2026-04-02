@@ -1,6 +1,6 @@
 # SimpleCANio - A Simple CAN Abstraction for stm32, esp32 and Teensy devices
 
-This library is an adapration fork of Owen Williams' SimpleCAN library: https://github.com/owennewo/SimpleCAN
+This library is an adaptation fork of Owen Williams' SimpleCAN library: https://github.com/owennewo/SimpleCAN
 
 [![GitHub release](https://img.shields.io/github/release/simplefoc/SimpleCANio.svg)](https://github.com/simplefoc/SimpleCANio/releases)
 
